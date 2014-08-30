@@ -9,6 +9,7 @@ import org.vosie.wikicards.utils.IconFontUtils;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,8 +32,6 @@ public class CardActivity extends Activity {
 
   private static final String TAG = "CardActivity";
 
-  private static int CARD_POSITION = 0;
-
   private Button previousButton;
   private Button nextButton;
   private TextView indexTextView;
@@ -47,6 +46,7 @@ public class CardActivity extends Activity {
   private View cardFront;
   private View cardBack;
   private ViewAnimator viewAnimator;
+  private int cardPosition;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +54,7 @@ public class CardActivity extends Activity {
     setContentView(R.layout.activity_card);
     initVariables();
     initViews();
-    loadWordAndShow(serverIDs[CARD_POSITION]);
+    loadWordAndShow(serverIDs[cardPosition]);
   }
 
   @Override
@@ -66,6 +66,8 @@ public class CardActivity extends Activity {
   @Override
   protected void onStop() {
     super.onStop();
+    SharedPreferences settings = getSharedPreferences("CardActivity", 0);
+    settings.edit().putInt("cardPosition", cardPosition).commit();
     EasyTracker.getInstance(this).activityStop(this);
   }
 
@@ -74,6 +76,8 @@ public class CardActivity extends Activity {
     serverIDs = wordsStorage.getServerIDs();
     frontFailOccurIndex = backFailOccurIndex = total = serverIDs.length;
     langCode = Settings.selectedLanguageCode;
+    SharedPreferences settings = getSharedPreferences("CardActivity", 0);
+    cardPosition = settings.getInt("cardPosition", 0);
   }
 
   private void initViews() {
@@ -94,7 +98,7 @@ public class CardActivity extends Activity {
     previousButton.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View arg0) {
-        loadWordAndShow(serverIDs[--CARD_POSITION]);
+        loadWordAndShow(serverIDs[--cardPosition]);
         updateNavBar();
       }
     });
@@ -102,7 +106,7 @@ public class CardActivity extends Activity {
     nextButton.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View arg0) {
-        loadWordAndShow(serverIDs[++CARD_POSITION]);
+        loadWordAndShow(serverIDs[++cardPosition]);
         updateNavBar();
       }
     });
@@ -112,10 +116,10 @@ public class CardActivity extends Activity {
 
   private void updateNavBar() {
     int failIndex = isCradFront() ? frontFailOccurIndex : backFailOccurIndex;
-    previousButton.setEnabled(CARD_POSITION > 0);
-    nextButton.setEnabled(CARD_POSITION < total - 1
-            && CARD_POSITION < failIndex - 1);
-    indexTextView.setText(String.valueOf(CARD_POSITION + 1) +
+    previousButton.setEnabled(cardPosition > 0);
+    nextButton.setEnabled(cardPosition < total - 1
+            && cardPosition < failIndex - 1);
+    indexTextView.setText(String.valueOf(cardPosition + 1) +
             "/" + String.valueOf(total));
   }
 
@@ -144,7 +148,7 @@ public class CardActivity extends Activity {
     currentCard = isCradFront() ? cardBack : cardFront;
     langCode = isCradFront() ?
             Settings.selectedLanguageCode : Settings.nativeTongue;
-    loadWordAndShow(serverIDs[CARD_POSITION]);
+    loadWordAndShow(serverIDs[cardPosition]);
     AnimationFactory.flipTransition(viewAnimator, FlipDirection.LEFT_RIGHT, 250);
   }
 
@@ -167,12 +171,12 @@ public class CardActivity extends Activity {
 
                 @Override
                 public void onError(int errorType, Exception e) {
-                  updateFailOccurIndex(CARD_POSITION);
+                  updateFailOccurIndex(cardPosition);
                   showErrorCard(errorType);
                   updateNavBar();
                   progress.dismiss();
                   ErrorUtils.get().handleDownloadkError(CardActivity.this, errorType,
-                          CARD_POSITION == 0);
+                          cardPosition == 0);
                   Log.e(TAG, "error while downloading word", e);
                 }
               });
@@ -261,7 +265,11 @@ public class CardActivity extends Activity {
     currentCard.findViewById(R.id.error_card).setVisibility(View.VISIBLE);
   }
 
-  public int getCardPosition(){
-    return CARD_POSITION;
+  public void setCardPosition(int position) {
+    cardPosition = position;
+  }
+
+  public int getCardPosition() {
+    return cardPosition;
   }
 }
