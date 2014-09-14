@@ -1,13 +1,18 @@
 package org.vosie.wikicards;
 
+import kankan.wheel.widget.WheelView;
+import kankan.wheel.widget.adapters.ArrayWheelAdapter;
+
 import org.vosie.wikicards.data.DownloadWordListener;
 import org.vosie.wikicards.data.Word;
 import org.vosie.wikicards.data.WordsStorage;
+import org.vosie.wikicards.utils.DialogUtils;
 import org.vosie.wikicards.utils.ErrorUtils;
 import org.vosie.wikicards.utils.IconFontUtils;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -104,6 +109,48 @@ public class CardActivity extends Activity {
       public void onClick(View arg0) {
         loadWordAndShow(serverIDs[++CARD_POSITION]);
         updateNavBar();
+      }
+    });
+
+    final View CardPositonWheelView =
+            LayoutInflater
+                    .from(CardActivity.this)
+                    .inflate(R.layout.card_positon_wheel, null);
+
+    WheelView numberWheel =
+            (WheelView) CardPositonWheelView.findViewById(R.id.current_position);
+
+    ArrayWheelAdapter<Integer> adapter =
+            new ArrayWheelAdapter<Integer>(this, new Integer[] { 1, 2, 3, 4, 5 });
+    adapter.setTextSize(18);
+    numberWheel.setViewAdapter(adapter);
+
+    indexTextView.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        // TODO Auto-generated method stub
+        DialogUtils.get().showConfirmDialog(CardActivity.this,
+                R.drawable.ic_launcher,
+                getString(R.string.dialog_title_option_menu),
+                CardPositonWheelView, // menus
+                "OK",
+                "Chena",
+                true, // cancelable
+                new DialogInterface.OnClickListener() {
+
+                  @Override
+                  public void onClick(DialogInterface dialog, int which) {
+                    // TODO Auto-generated method stub
+
+                  }
+                },
+                new DialogInterface.OnCancelListener() {
+                  @Override
+                  public void onCancel(DialogInterface dialog) {
+                    // TODO Auto-generated method stub
+
+                  }
+                });
       }
     });
 
@@ -261,7 +308,7 @@ public class CardActivity extends Activity {
     currentCard.findViewById(R.id.error_card).setVisibility(View.VISIBLE);
   }
 
-  public int getCardPosition(){
+  public int getCardPosition() {
     return CARD_POSITION;
   }
 }

@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
+import android.view.View;
 
 public class DialogUtils {
 
@@ -106,6 +107,33 @@ public class DialogUtils {
 
     return showConfirmDialog(ctx, icon, ctx.getString(title), ctx.getString(desc),
             cancelable, click, cancel);
+  }
+  
+  public AlertDialog showConfirmDialog(Context ctx, int icon,
+          CharSequence title, View view,
+          CharSequence okText, CharSequence cancelText, boolean cancelable,
+          DialogInterface.OnClickListener click,
+          final DialogInterface.OnCancelListener cancel) {
+
+    AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+    if (icon > 0) {
+      builder.setIcon(icon);
+    }
+    builder.setCancelable(cancelable);
+    builder.setTitle(title);
+    builder.setView(view);
+    builder.setPositiveButton(okText, click);
+    builder.setNegativeButton(cancelText, new OnClickListener() {
+
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        if (null != cancel) {
+          cancel.onCancel(dialog);
+        }
+      }
+    });
+    builder.setOnCancelListener(cancel);
+    return builder.show();
   }
 
   /**
