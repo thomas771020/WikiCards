@@ -1,6 +1,7 @@
 package org.vosie.wikicards;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,16 +14,25 @@ import org.vosie.wikicards.utils.DialogUtils;
 import org.vosie.wikicards.utils.ErrorUtils;
 import org.vosie.wikicards.utils.IconFontUtils;
 import org.vosie.wikicards.utils.PlayerUtils;
+import org.vosie.wikicards.utils.RecordUtils;
+import org.vosie.wikicards.utils.WordSoundFileUtils;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -41,6 +51,8 @@ public class CardActivity extends SecondTierActivity {
   private static final String TAG = "CardActivity";
 
   private static int CARD_POSITION = 0;
+  private static int DETECT_VOICE_INTERVAL = 250;
+  private static int MAX_RECORD_LENGTH = 3000;
 
   private Button previousButton;
   private Button nextButton;
@@ -59,7 +71,11 @@ public class CardActivity extends SecondTierActivity {
   private ViewAnimator viewAnimator;
   private CardPositionSelector cardPositionSelector;
   private MediaPlayer activePlayer;
+  private Recorder activeRecorder;
   protected SoundStorage soundStorage;
+  private Handler handler = new Handler();
+  public AudioVizDialog recordingDialog;
+  private int recordCurrentTime = 0;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +130,7 @@ public class CardActivity extends SecondTierActivity {
     initNavBar();
     initFlipCard();
     initButtons();
+    initRecordingDialog();
   }
 
   private void initButtons() {
@@ -174,6 +191,16 @@ public class CardActivity extends SecondTierActivity {
             };
     cardPositionSelector =
             new CardPositionSelector(this, serverIDs.length, listener);
+  }
+
+  private void initRecordingDialog() {
+    recordingDialog = new AudioVizDialog(this, new AudioVizDialog.Listener() {
+      @Override
+      public void onDoneClick() {
+        stopRecord();
+      }
+    });
+    recordingDialog.setMaxRecordLength(MAX_RECORD_LENGTH / 1000);
   }
 
   private void updateNavBar() {
@@ -257,6 +284,10 @@ public class CardActivity extends SecondTierActivity {
             (Button) currentCard.findViewById(R.id.button_go_to_wiki);
     Button sayWordButton =
             (Button) currentCard.findViewById(R.id.button_say_word);
+    Button recordWordButton =
+            (Button) currentCard.findViewById(R.id.button_record_word);
+    Button playRecordButton =
+            (Button) currentCard.findViewById(R.id.button_play_record);
     final ImageButton starButton = (ImageButton) currentCard.findViewById(R.id.button_star);
 
     if (starredWordsStorage.isStarred(word.serverID)) {
@@ -283,6 +314,10 @@ public class CardActivity extends SecondTierActivity {
     goToWikiButton.setTypeface(Settings.iconFont);
     sayWordButton.setText(IconFontUtils.get(IconFontUtils.SPEAKER));
     sayWordButton.setTypeface(Settings.iconFont);
+    recordWordButton.setText(IconFontUtils.get(IconFontUtils.RECORD));
+    recordWordButton.setTypeface(Settings.iconFont);
+    playRecordButton.setText(IconFontUtils.get(IconFontUtils.SPEAKER2));
+    playRecordButton.setTypeface(Settings.iconFont);
     wordTextView.setText(word.label);
     loadImage(word.imageURL);
     descriptionTextView.setText(word.shortDesc);
@@ -299,6 +334,20 @@ public class CardActivity extends SecondTierActivity {
       @Override
       public void onClick(View v) {
         sayWord(word);
+      }
+    });
+
+    recordWordButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View arg0) {
+        recordWord(word);
+      }
+    });
+
+    playRecordButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        playRecord(word);
       }
     });
   }
@@ -320,21 +369,7 @@ public class CardActivity extends SecondTierActivity {
           // user may change the word, we don't need to say it.
           return;
         }
-        if (null != activePlayer && activePlayer.isPlaying()) {
-          activePlayer.stop();
-        }
-        MediaPlayer mp = PlayerUtils.get().createPlayer(CardActivity.this, f,
-                new PlayerUtils.Listener() {
-
-                  @Override
-                  public void onComplete(MediaPlayer mp, int error, int extra) {
-                    if (activePlayer == mp) {
-                      activePlayer = null;
-                    }
-                  }
-                });
-        mp.start();
-        activePlayer = mp;
+        playFile(f);
       }
 
       @Override
@@ -343,6 +378,97 @@ public class CardActivity extends SecondTierActivity {
       }
 
     });
+  }
+
+  private void playFile(File f) {
+    if (null != activePlayer && activePlayer.isPlaying()) {
+      activePlayer.stop();
+    }
+    MediaPlayer mp = PlayerUtils.get().createPlayer(CardActivity.this, f,
+            new PlayerUtils.Listener() {
+
+              @Override
+              public void onComplete(MediaPlayer mp, int error, int extra) {
+                if (activePlayer == mp) {
+                  activePlayer = null;
+                }
+              }
+            });
+    mp.start();
+    activePlayer = mp;
+  }
+
+  private void recordWord(Word w) {
+
+    if (null != activeRecorder && activeRecorder.isRecording()) {
+      activeRecorder.stop();
+    }
+
+    File wsfile = WordSoundFileUtils.getFile(this, w.languageCode, w.serverID);
+
+    activeRecorder = RecordUtils.get().createRecorder(wsfile);
+
+    try {
+      activeRecorder.start();
+    } catch (IllegalStateException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    recordingDialog.setCurrentRecordLength(0);
+    recordingDialog.show();
+
+    handler.postDelayed(detectSound, DETECT_VOICE_INTERVAL);
+    handler.postDelayed(countdownRecordTime, 1000);
+  }
+
+  // If user didn't press "done" button. Stop record after MAX_RECORD_LENGTH.
+  private Runnable countdownRecordTime = new Runnable() {
+
+    @Override
+    public void run() {
+      recordCurrentTime += 1000;
+      recordingDialog.setCurrentRecordLength(recordCurrentTime / 1000);
+      
+      if (recordCurrentTime >= MAX_RECORD_LENGTH) {
+        stopRecord();
+        recordCurrentTime = 0;
+      } else {
+        handler.postDelayed(countdownRecordTime, 1000);
+      }
+    }
+
+  };
+
+  public void stopRecord() {
+    if (null != activeRecorder) {
+      activeRecorder.stop();
+    }
+    recordingDialog.dismiss();
+  }
+
+  private Runnable detectSound = new Runnable() {
+
+    @Override
+    public void run() {
+      if (activeRecorder.isRecording()) {
+        recordingDialog.setSoundLevel(activeRecorder.getAmplitude());
+        handler.postDelayed(detectSound, DETECT_VOICE_INTERVAL);
+      }
+    }
+
+  };
+
+  private void playRecord(Word w) {
+    File recordFile = WordSoundFileUtils.getFile(this, w.languageCode, w.serverID);
+    if (!recordFile.exists() || !langCode.equals(w.languageCode) ||
+            !serverIDs[CARD_POSITION].equals(w.serverID)) {
+      // user may flip the card
+      // user may change the word, we don't need to say it.
+      return;
+    }
+    playFile(recordFile);
   }
 
   private void loadImage(String url) {

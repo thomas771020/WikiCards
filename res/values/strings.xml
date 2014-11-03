@@ -42,6 +42,12 @@
     <string name="dialog_desc_http_error">Sorry, the connection between your device to our server had some problems. We will check them as soon as possible.</string>
     <string name="dialog_title_internal_error">Error</string>
     <string name="dialog_desc_internal_error">There is something wrong to save the data into your device. We will check them as soon as possible.</string>
+    <string name="dialog_title_recording">Recording</string>
+    <string name="dialog_desc_recording_word">Recording Word</string>
+    <string name="dialog_button_done">Done</string>
+    <string name="dialog_desc_max_length">Maximum Length: </string>
+    <string name="dialog_desc_sec"> sec</string>
+    <string name="dialog_desc_current_length">Current Length: </string>
     <string name="button_download">Download</string>
     <string name="button_delete">Delete</string>
     <string name="button_options">Options</string>
@@ -54,6 +60,7 @@
     <string name="msg_partial_downloaded">Partial downloaded</string>
     <string name="msg_database_downloaded">Fully downloaded</string>
     <string name="msg_empty_database_unselectable">Unable to use it without Internet connection</string>
+    <string name="msg_please_say_the_word">Please say the word</string>
     <string name="text_description">Description</string>
     <string name="button_go_to_wiki">Go to Wikipedia</string>
     <string name="imageview_content_description_flag">Flag</string>
@@ -63,12 +70,15 @@
     <string name="pref_title_changelog">Change Logs</string>
     <string name="pref_title_reportbug">Report Bugs</string>
     <string name="msg_empty_database_unable_to_view">The selected language is empty. We cannot open it for you without Internet connection. Please turn on Internet connection or choose a language with offline database</string>
-	<string name="dialog_title_tip">Tip</string>
-	<string name="dialog_desc_no_card_to_show">There is no card to show</string>
-	<string name="msg_error_to_play">This device cannot play MP3 file. Please check if other player is playing now.</string>
-	<string name="button_desc_say_word">read the word</string>
-	<string name="button_desc_previous">move to previous word</string>
-	<string name="button_desc_next">move to next word</string>
-	<string name="button_desc_go_to_wiki">open this word in wikipedia</string>
-	<string name="button_desc_star">make this word as starred word</string>
+    <string name="dialog_title_tip">Tip</string>
+    <string name="dialog_desc_no_card_to_show">There is no card to show</string>
+    <string name="msg_error_to_play">This device cannot play MP3 file. Please check if other player is playing now.</string>
+    <string name="button_desc_say_word">read the word</string>
+    <string name="button_desc_record_word">record the word</string>
+    <string name="button_desc_play_record">play the record</string>
+    <string name="button_desc_previous">move to previous word</string>
+    <string name="button_desc_next">move to next word</string>
+    <string name="button_desc_go_to_wiki">open this word in wikipedia</string>
+    <string name="button_desc_star">make this word as starred word</string>
+
 </resources>

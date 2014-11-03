@@ -8,6 +8,7 @@ import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 import org.vosie.wikicards.test.mock.data.MockSoundStorage;
 import org.vosie.wikicards.test.mock.utils.MockPlayerUtils;
+import org.vosie.wikicards.test.mock.utils.MockReordUtils;
 
 import android.app.AlertDialog;
 import android.test.ActivityInstrumentationTestCase2;
@@ -35,7 +36,6 @@ public class CardActivityTest extends
     mCardActivity = getActivity();
     mNextButton = mCardActivity.findViewById(R.id.button_next);
     mPreviousButton = mCardActivity.findViewById(R.id.button_previous);
-    mCardActivity.setCardPosition(0);
   }
 
   public void testRemeberCardPosotion_save() throws Throwable {
@@ -102,12 +102,12 @@ public class CardActivityTest extends
     this.runTestOnUiThread(new Runnable() {
       @Override
       public void run() {
-        selector.setCurrentItem(20);
+        selector.setCurrentItem(0);
       }
     });
     getInstrumentation().waitForIdleSync();
     performClick(dialog.getButton(AlertDialog.BUTTON_POSITIVE));
-    assertEquals(20, mCardActivity.getCardPosition());
+    assertEquals(0, mCardActivity.getCardPosition());
   }
 
   public void testCardPositionSelector_showCorrectPosition() throws Throwable {
@@ -121,9 +121,9 @@ public class CardActivityTest extends
     assertEquals(10, selector.getCurrentItem());
     performClick(dialog.getButton(AlertDialog.BUTTON_NEGATIVE));
 
-    mCardActivity.setCardPosition(20);
+    mCardActivity.setCardPosition(0);
     performClick(idxTv);
-    assertEquals(20, selector.getCurrentItem());
+    assertEquals(0, selector.getCurrentItem());
     performClick(dialog.getButton(AlertDialog.BUTTON_NEGATIVE));
   }
 
@@ -179,6 +179,52 @@ public class CardActivityTest extends
     // we may hear a little bit of audio file but not all of it.
     assertNotNull(mockedPlayer.createdPlayer);
 
+  }
+
+  public void testRecordWordButton() throws Throwable {
+    View recordWord = mCardActivity.findViewById(R.id.button_record_word);
+    AlertDialog dialog = mCardActivity.recordingDialog;
+    MockReordUtils mockedReccordUtils = MockReordUtils.createInstance();
+    performClick(recordWord);
+    assertTrue(mockedReccordUtils.createdRecorder.isRecording());
+    assertTrue(dialog.isShowing());
+    performClick(dialog.getButton(AlertDialog.BUTTON_POSITIVE));
+    assertFalse(mockedReccordUtils.createdRecorder.isRecording());
+    assertFalse(dialog.isShowing());
+  }
+
+  public void testRecordWordButton_autoStopAfterThreeSec() throws Throwable {
+    View recordWord = mCardActivity.findViewById(R.id.button_record_word);
+    AlertDialog dialog = mCardActivity.recordingDialog;
+    MockReordUtils mockedReccordUtils = MockReordUtils.createInstance();
+    performClick(recordWord);
+    assertTrue(mockedReccordUtils.createdRecorder.isRecording());
+    assertTrue(dialog.isShowing());
+    synchronized (this) {
+      wait(3500);
+    }
+    assertFalse(mockedReccordUtils.createdRecorder.isRecording());
+    assertFalse(dialog.isShowing());
+  }
+
+  public void testPlayUserSound() throws Throwable {
+    View recordWord = mCardActivity.findViewById(R.id.button_record_word);
+    AlertDialog dialog = mCardActivity.recordingDialog;
+    MockReordUtils mockedReccordUtils = MockReordUtils.createInstance();
+    performClick(recordWord);
+    assertTrue(mockedReccordUtils.createdRecorder.isRecording());
+    assertTrue(dialog.isShowing());
+    performClick(dialog.getButton(AlertDialog.BUTTON_POSITIVE));
+    assertFalse(mockedReccordUtils.createdRecorder.isRecording());
+    assertFalse(dialog.isShowing());
+
+    // We need to change the langCode to en because the langCode of base db is
+    // en.
+    mCardActivity.langCode = "en";
+    View playRecord = mCardActivity.findViewById(R.id.button_play_record);
+    MockPlayerUtils mockedPlayer = MockPlayerUtils.createInstance();
+    performClick(playRecord);
+    assertNotNull(mockedPlayer.createdPlayer);
   }
 
 }

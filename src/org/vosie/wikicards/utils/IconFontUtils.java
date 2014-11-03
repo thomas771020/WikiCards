@@ -8,6 +8,8 @@ public class IconFontUtils {
   public static final int ARROW_RIGHT = 0xe604;
   public static final int ARROW_LEFT = 0xe605;
   public static final int SPEAKER = 0xe606;
+  public static final int RECORD = 0xe607;
+  public static final int SPEAKER2 = 0xe608;
 
   public static String get(int code) {
     return String.valueOf((char) code);

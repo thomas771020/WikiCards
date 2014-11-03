@@ -18,21 +18,45 @@
 
             <Button
                 android:id="@+id/button_go_to_wiki"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@drawable/button_white"
                 android:contentDescription="@string/button_desc_go_to_wiki"
-                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textAppearance="?android:attr/textAppearanceMedium"
                 android:textColor="#000" />
 
             <Button
                 android:id="@+id/button_say_word"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="5dp"
+                android:layout_weight="1"
                 android:background="@drawable/button_white"
                 android:contentDescription="@string/button_desc_say_word"
-                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="#000" />
+
+            <Button
+                android:id="@+id/button_record_word"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_white"
+                android:contentDescription="@string/button_desc_record_word"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="#000" />
+
+            <Button
+                android:id="@+id/button_play_record"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_white"
+                android:contentDescription="@string/button_desc_record_word"
+                android:textAppearance="?android:attr/textAppearanceMedium"
                 android:textColor="#000" />
 
             <LinearLayout
